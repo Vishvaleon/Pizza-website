@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% block title %} {{pizza.name}} {% endblock %}
+{% block body %}
+<style>
+    body {
+        background-color: #f8f1e5;
+        font-family: Arial, sans-serif;
+        text-align: center;
+    }
+
+    .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 20px;
+    }
+
+    .Pizza {
+        background-color: #fff8dc;
+        width: 320px;
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 3px 3px 15px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+
+    h3 {
+        color: #333;
+        margin-bottom: 10px;
+    }
+
+    .cart, .btn-buy {
+        width: 100%;
+        padding: 8px;
+        font-size: 16px;
+        cursor: pointer;
+        border-radius: 5px;
+        margin-top: 10px;
+        transition: 0.3s;
+    }
+
+    .cart {
+        background-color: orange;
+        color: white;
+        border: none;
+    }
+
+    .cart:hover {
+        background-color: darkorange;
+    }
+
+    .btn-buy {
+        background-color: green;
+        color: white;
+        border: none;
+        display: none;
+    }
+
+    .btn-buy:hover {
+        background-color: darkgreen;
+    }
+
+    #amount {
+        margin-top: 10px;
+        font-weight: bold;
+        color: #d9534f;
+    }
+
+    img {
+        width: 400px;
+        height: auto;
+        border-radius: 10px;
+        box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .quantity-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 10px;
+    }
+
+    .quantity-btn {
+        background-color: #ff4500;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 18px;
+        margin: 0 5px;
+    }
+
+    .quantity-btn:hover {
+        background-color: #cc3700;
+    }
+
+    .quantity-input {
+        width: 50px;
+        padding: 5px;
+        text-align: center;
+        font-size: 16px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+</style>
+
+<div class="container">
+    <img src="{{ pizza.image.url }}" alt="{{ pizza.name }}">
+    <div class="Pizza">
+        <h3>{{pizza.name}}</h3>
+        <h3>Price: ₹{{pizza.price}}</h3>
+        <h3>Availability: {% if pizza.availability %} <span style="color: green;">Available</span> {% else %} <span style="color: red;">Not Available</span> {% endif %}</h3>
+        
+        <div class="quantity-container">
+            <button type="button" class="quantity-btn" onclick="decrementQuantity()">-</button>
+            <input type="number" id="count" name="count" value="1" min="1" class="quantity-input">
+            <button type="button" class="quantity-btn" onclick="incrementQuantity()">+</button>
+        </div>
+
+        <div id="amount">Total Amount: ₹{{ pizza.price }}</div>
+
+        {% if user.is_authenticated %}
+        <form method="post" action="{% url 'order_pizza' pizza.id user.id %}">
+            {% csrf_token %}
+            <input type="hidden" id="hidden-count" name="count" value="1">
+            <button type="submit" class="btn-buy">Buy Now</button>
+        </form>
+        <form action="{% url 'add_cart' pizza.id user.id %}" method="post">
+            {% csrf_token %}
+            <button class="cart" type="submit">Add to Cart</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    function updateAmount() {
+        let count = parseInt(document.getElementById("count").value) || 1;
+        let pizzaPrice = {{ pizza.price|default:0 }};
+        let total = pizzaPrice * count;
+
+        document.getElementById("amount").innerHTML = `Total Amount: ₹${total}`;
+        document.getElementById("hidden-count").value = count;
+
+        document.querySelector('.btn-buy').style.display = count > 0 ? "block" : "none";
+    }
+
+    function incrementQuantity() {
+        let countField = document.getElementById("count");
+        countField.value = parseInt(countField.value) + 1;
+        updateAmount();
+    }
+
+    function decrementQuantity() {
+        let countField = document.getElementById("count");
+        if (parseInt(countField.value) > 1) {
+            countField.value = parseInt(countField.value) - 1;
+            updateAmount();
+        }
+    }
+
+    document.getElementById("count").addEventListener("input", updateAmount);
+</script>
+
+{% endblock %}

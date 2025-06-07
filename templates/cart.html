@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+{% block title %}My Cart{% endblock %}
+{% block body %}
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f9f9f9;
+        text-align: center;
+        padding: 20px;
+    }
+    
+    h1 {
+        color: #ff4500;
+        margin-bottom: 20px;
+    }
+    
+    table {
+        width: 80%;
+        margin: auto;
+        border-collapse: collapse;
+        background: white;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    th, td {
+        padding: 15px;
+        border-bottom: 1px solid #ddd;
+        text-align: center;
+    }
+    
+    th {
+        background-color: #ff4500;
+        color: white;
+    }
+    
+    td img {
+        border-radius: 8px;
+    }
+    
+    .quantity-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .quantity-btn {
+        background-color: #ff4500;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        cursor: pointer;
+        border-radius: 4px;
+        font-size: 16px;
+        margin: 0 5px;
+    }
+    
+    .quantity-btn:hover {
+        background-color: #cc3700;
+    }
+    
+    .quantity-input {
+        width: 40px;
+        text-align: center;
+        font-size: 16px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+    
+    .cart-btn {
+        background-color: red;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        cursor: pointer;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+    
+    .cart-btn:hover {
+        background-color: darkred;
+    }
+    
+    .buy-now-btn {
+        background-color: green;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        font-size: 18px;
+        cursor: pointer;
+        border-radius: 5px;
+        margin-top: 20px;
+    }
+    
+    .buy-now-btn:hover {
+        background-color: darkgreen;
+    }
+
+    #total-items{
+        color: black;
+    }
+
+    
+</style>
+
+<h1 style="color: #ff4500;">My Cart</h1>
+
+<table>
+    <thead>
+        <tr>
+            <th>S.No</th>
+            <th>Pizza</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in cart %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>
+                <div style="text-align: center;">
+                    <img src="{{ item.pizza.image.url }}" alt="{{ item.pizza.name }}" width="120px">
+                    <div style="color: #ff4500;">{{ item.pizza.name }}</div>
+                </div>
+            </td>
+            <td style="color: green;">₹<span class="price">{{ item.pizza.price }}</span></td>
+            <td>
+                <div class="quantity-container">
+                    <button class="quantity-btn" onclick="changeQuantity({{ item.id }}, -1)">-</button>
+                    <input type="number" id="quantity-{{ item.id }}" class="quantity-input" value="{{ item.quantity }}" readonly>
+                    <button class="quantity-btn" onclick="changeQuantity({{ item.id }}, 1)">+</button>
+                </div>
+            </td>
+            <td>
+                <form method="POST" action="{% url 'delete_cart' item.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="cart-btn">Remove</button>
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5" style="color: red; text-align: center;">Your cart is empty!</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<br>
+<p><strong style="color: black;">Total Pizzas in Cart:</strong> <span id="total-items" style="color: #004080;">{{ total_count }}</span></p>
+<br>
+<p><strong style="color: black;">Total Price:</strong> <span id="total-price" style="color: green;">₹{{ total_amount }}</span></p>
+
+<form method="POST" action="{% url 'checkout' user_id=request.user.id %}">
+    {% csrf_token %}
+    <button type="submit" class="buy-now-btn">Buy Now</button>
+</form>
+
+<script>
+    function changeQuantity(itemId, change) {
+        let inputField = document.getElementById(`quantity-${itemId}`);
+        let newValue = parseInt(inputField.value) + change;
+    
+        if (newValue >= 1) {
+            inputField.value = newValue;
+            updateCart(itemId, newValue);
+        }
+    }
+    
+    function getCSRFToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]').value;
+    }
+    
+    function updateCart(itemId, newQuantity) {
+        fetch(`/update_cart/${itemId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({ quantity: newQuantity })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.total_count !== undefined && data.total_amount !== undefined) {
+                document.getElementById('total-items').innerText = data.total_count;
+                document.getElementById('total-price').innerText = `₹${data.total_amount}`;
+            }
+        })
+        .catch(error => console.error('Error updating cart:', error));
+    }
+</script>
+
+{% endblock %}

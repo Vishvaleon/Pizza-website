@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% block title %} Home Page {% endblock %}
+{% block body %}
+<h1 style="text-align: center; color: #ff8800;">Pizza Shop</h1>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #fff5e6;
+        margin: 0;
+        padding: 0;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: auto;
+        padding: 20px;
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px;
+        background: #ff8800; 
+        color: white;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+
+    .header a, .header button {
+        background: white;
+        color: #ff8800;
+        padding: 8px 12px;
+        border-radius: 5px;
+        text-decoration: none;
+        font-weight: bold;
+        border: none;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+    .header button:hover, .header a:hover {
+        background: #ffbb66;
+    }
+
+    #all-pizza {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 15px;
+        position: relative;
+    }
+    
+    .pizza-box {
+        width: 250px;
+        padding: 15px;
+        border-radius: 15px;
+        background: rgba(255, 239, 153, 0.9);
+        border: 2px solid #ff8800; 
+        box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        transition: all 0.3s ease-in-out;
+        position: relative;
+        margin: 10px; 
+    }
+    
+
+    .pizza-box:first-child {
+        margin-top: 0; 
+    }
+
+    .pizza-box:hover {
+        transform: scale(1.05);
+        box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .pizza-box img {
+        width: 200px;
+        height: 200px;
+        object-fit: cover;
+        border-radius: 10px;
+    }
+
+    .pizza-box b {
+        color: #703800; 
+        font-size: 18px;
+        margin-top: 10px;
+    }
+
+    .btn-small {
+        background: #ff8800;
+        color: white;
+        padding: 8px 15px;
+        border: none;
+        border-radius: 8px;
+        margin-top: 10px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-small:hover {
+        background: #cc6b00;
+        transform: scale(1.1);
+    }
+</style>
+
+<div class="container">
+    {% if user.is_authenticated %}
+    <div class="header">
+        <b>Welcome, {{user.username}}</b>
+        <div>
+            <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit">Log Out</button>
+            </form>
+            <a href="{% url 'order' user.id %}">My Orders</a>
+            <a href="{% url 'my_cart' user.id %}">Cart ({{cart_total}})</a>
+        </div>
+    </div>
+
+    <div id="all-pizza">
+        {% for i in pizza %}
+        <div class="pizza-box">
+            <img src="{{ i.image.url }}" alt="{{ i.name }}">
+            <b>{{ i.name }}</b>
+            <a href="{% url 'pizza_detail' i.pk %}">
+                <button class="btn-small">View</button>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="header">
+        <a href="{% url 'login' %}">Login</a>
+        <a href="{% url 'signup' %}">Signup</a>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+ 
